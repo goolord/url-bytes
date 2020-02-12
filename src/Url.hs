@@ -20,7 +20,6 @@ module Url
 import Data.Word
 import Data.Bytes
 import Control.Monad (when)
-import Debug.Trace
 import qualified Data.Bytes.Parser as P
 import qualified Data.Bytes.Parser.Latin as P
 import qualified Data.Bytes.Parser.Unsafe as PU
@@ -87,7 +86,6 @@ parserUrl urlSerialization = do
   (i5, _) <- P.measure $ P.skipUntil '/'
   PU.unconsume i5
   urlUsernameEnd <- fromIntegral <$> do
-    traceShowM (i3, i4, i5)
     if i4 >= i5 || i3 == i4
       then do
         PU.jump (userStart + 1)
