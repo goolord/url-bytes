@@ -9,7 +9,7 @@
   , RecordWildCards
 #-}
 
-
+-- | Note: this library parses, but does not validate urls
 module Url 
   ( Url(..)
   , ParseError(..)
@@ -25,11 +25,10 @@ import qualified Data.Bytes.Parser as P
 import qualified Data.Bytes.Parser.Latin as P
 import qualified Data.Bytes.Parser.Unsafe as PU
 
--- | Note: this library parses, but does not validate urls
-
--- | Url type represented by its serialization 
+-- | Url type represented by its serialization,
 -- and slices of that serialization.
 {- | Syntax in pseudo-BNF:
+
 @
 url = scheme ":" [ hierarchical | non-hierarchical ] [ "?" query ]? [ "#" fragment ]?
 non-hierarchical = non-hierarchical-path
@@ -53,16 +52,19 @@ data Url = Url
   , urlFragmentStart :: !(Maybe Word32) -- Before '#', unlike Position :: ::FragmentStart
   } deriving (Eq, Ord, Show)
 
+-- | Possible parse errors
 data ParseError
   = EndOfInput
   | InvalidAuthority
   | InvalidPort
   deriving (Eq, Ord, Show)
 
+-- | Decode a hierarchical URL
 decodeUrl :: Bytes -> Either ParseError Url
 decodeUrl urlSerialization = P.parseBytesEither (parserUrl urlSerialization) urlSerialization
 
--- | Note: non-hierarchical Urls (such as relative paths) will not currently parse.
+-- | Parser type from @bytesmith@
+-- Note: non-hierarchical Urls (such as relative paths) will not currently parse.
 parserUrl :: Bytes -> P.Parser ParseError s Url
 parserUrl urlSerialization = do
   (i1, _) <- P.measure $ P.skipUntil ':'
