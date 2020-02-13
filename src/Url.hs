@@ -27,7 +27,6 @@ module Url
 import Data.Word
 import Data.Bytes
 import Data.Bytes.Types
-import Control.Monad (when)
 import qualified Data.Bytes as Bytes
 import qualified Data.Bytes.Parser as P
 import qualified Data.Bytes.Parser.Latin as P
@@ -124,11 +123,11 @@ parserUrl urlSerialization = do
     if i1 < i2
       then do
         PU.jump i1
+        P.char3 InvalidAuthority ':' '/' '/'
         pure $ fromIntegral i1
       else do
         PU.jump 0
         pure 0
-  when (urlSchemeEnd /= 0) $ P.char3 InvalidAuthority ':' '/' '/'
   userStart <- PU.cursor
   (i3, _) <- P.measure $ P.skipUntil ':'
   PU.unconsume i3
@@ -173,7 +172,7 @@ parserUrl urlSerialization = do
   PU.unconsume i8
   (i9, _) <- P.measure $ P.skipUntil '#'
   PU.unconsume i9
-  let !len = fromIntegral $ Bytes.length urlSerialization
+  let len = fromIntegral $ Bytes.length urlSerialization
   (urlQueryStart, urlFragmentStart) <- case compare i8 i9 of
     EQ -> pure (len, len)
     LT -> do
