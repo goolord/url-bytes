@@ -12,10 +12,13 @@
 
 -- | Note: this library parses, but does not validate urls
 module Url 
-  ( Url(..)
+  ( -- * Types
+    Url(..)
   , ParseError(..)
+    -- * Parsing
   , decodeUrl
   , parserUrl
+    -- * Slicing
   , getScheme
   , getUsername
   , getHost
@@ -59,24 +62,28 @@ data Url = Url
   , urlFragmentStart :: !Word32 -- ^ Before @\'#'@
   } deriving (Eq, Ord, Show)
 
+-- | Slice into the 'Url' and retrieve the scheme, if it's present
 getScheme :: Url -> Maybe Bytes
 getScheme Url{urlSerialization,urlSchemeEnd} = 
   if urlSchemeEnd == 0
     then Nothing
     else Just $ unsafeTake (fromIntegral urlSchemeEnd) urlSerialization
 
+-- | Slice into the 'Url' and retrieve the username, if it's present
 getUsername :: Url -> Maybe Bytes
 getUsername Url{urlSerialization,urlSchemeEnd,urlUsernameEnd,urlHostStart} =
   if urlUsernameEnd == urlHostStart
     then Nothing
     else Just $ unsafeSlice (urlSchemeEnd + 3) urlUsernameEnd urlSerialization
 
+-- | Slice into the 'Url' and retrieve the host, if it's present
 getHost :: Url -> Maybe Bytes
 getHost Url{urlSerialization,urlHostStart,urlHostEnd} =
   if urlHostStart == urlHostEnd
     then Nothing
     else Just $ unsafeSlice urlHostStart urlHostEnd urlSerialization
 
+-- | Slice into the 'Url' and retrieve the path, if it's present
 getPath :: Url -> Maybe Bytes
 getPath Url{urlSerialization,urlPathStart,urlQueryStart} = 
   if fromIntegral urlPathStart == len
@@ -85,6 +92,7 @@ getPath Url{urlSerialization,urlPathStart,urlQueryStart} =
   where
   len = Bytes.length urlSerialization
 
+-- | Slice into the 'Url' and retrieve the query string, if it's present
 getQuery :: Url -> Maybe Bytes
 getQuery Url{urlSerialization,urlQueryStart,urlFragmentStart} =
   if len == fromIntegral urlQueryStart
@@ -93,6 +101,7 @@ getQuery Url{urlSerialization,urlQueryStart,urlFragmentStart} =
   where
   len = Bytes.length urlSerialization
 
+-- | Slice into the 'Url' and retrieve the fragment, if it's present
 getFragment :: Url -> Maybe Bytes
 getFragment Url{urlSerialization,urlFragmentStart} =
   if len == fromIntegral urlFragmentStart
