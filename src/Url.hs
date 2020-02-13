@@ -49,14 +49,14 @@ hierarchical-path = [ "/" path-segment ]+
 data Url = Url
   { urlSerialization :: !Bytes
   -- Components
-  , urlSchemeEnd     :: !Word32 -- Before ':: '
-  , urlUsernameEnd   :: !Word32 -- Before ':: ' (if a password is given) or '@' (if not)
+  , urlSchemeEnd     :: !Word32 -- ^ Before @\':'@
+  , urlUsernameEnd   :: !Word32 -- ^ Before @\':'@ (if a password is given) or @\'\@'@ (if not)
   , urlHostStart     :: !Word32
   , urlHostEnd       :: !Word32
   , urlPort          :: !(Maybe Word16)
-  , urlPathStart     :: !Word32         -- Before initial '/', if any
-  , urlQueryStart    :: !Word32 -- Before '?', unlike Position :: ::QueryStart
-  , urlFragmentStart :: !Word32 -- Before '#', unlike Position :: ::FragmentStart
+  , urlPathStart     :: !Word32 -- ^ Before initial @\'/'@, if any
+  , urlQueryStart    :: !Word32 -- ^ Before @\'?'@
+  , urlFragmentStart :: !Word32 -- ^ Before @\'#'@
   } deriving (Eq, Ord, Show)
 
 getScheme :: Url -> Maybe Bytes
@@ -96,8 +96,8 @@ getQuery Url{urlSerialization,urlQueryStart,urlFragmentStart} =
 getFragment :: Url -> Maybe Bytes
 getFragment Url{urlSerialization,urlFragmentStart} =
   if len == fromIntegral urlFragmentStart
-  then Nothing
-  else Just $ unsafeSlice urlFragmentStart (fromIntegral len) urlSerialization
+    then Nothing
+    else Just $ unsafeSlice urlFragmentStart (fromIntegral len) urlSerialization
   where
   len = Bytes.length urlSerialization
 
@@ -197,3 +197,4 @@ parserUrl urlSerialization = do
 unsafeSlice :: Word32 -> Word32 -> Bytes -> Bytes
 unsafeSlice begin end (Bytes arr off _) = 
   Bytes arr (off + fromIntegral begin) (fromIntegral $ end - begin)
+
