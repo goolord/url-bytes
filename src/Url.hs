@@ -7,6 +7,7 @@
   , ScopedTypeVariables
   , LambdaCase
   , RecordWildCards
+  , NamedFieldPuns
 #-}
 
 -- | Note: this library parses, but does not validate urls
@@ -15,11 +16,19 @@ module Url
   , ParseError(..)
   , decodeUrl
   , parserUrl
+  , getScheme
+  , getUsername
+  , getHost
+  , getPath
+  , getQuery
+  , getFragment
   ) where
 
 import Data.Word
 import Data.Bytes
+import Data.Bytes.Types
 import Control.Monad (when)
+import qualified Data.Bytes as Bytes
 import qualified Data.Bytes.Parser as P
 import qualified Data.Bytes.Parser.Latin as P
 import qualified Data.Bytes.Parser.Unsafe as PU
@@ -50,6 +59,52 @@ data Url = Url
   , urlQueryStart    :: !(Maybe Word32) -- Before '?', unlike Position :: ::QueryStart
   , urlFragmentStart :: !(Maybe Word32) -- Before '#', unlike Position :: ::FragmentStart
   } deriving (Eq, Ord, Show)
+
+getScheme :: Url -> Maybe Bytes
+getScheme Url{urlSerialization,urlSchemeEnd} = 
+  if urlSchemeEnd == 0
+    then Nothing
+    else Just $ unsafeTake (fromIntegral urlSchemeEnd) urlSerialization
+
+getUsername :: Url -> Maybe Bytes
+getUsername Url{urlSerialization,urlSchemeEnd,urlUsernameEnd,urlHostStart} =
+  if urlUsernameEnd == urlHostStart
+    then Nothing
+    else Just $ unsafeSlice (urlSchemeEnd + 3) urlUsernameEnd urlSerialization
+
+getHost :: Url -> Maybe Bytes
+getHost Url{urlSerialization,urlHostStart,urlHostEnd} =
+  if urlHostStart == urlHostEnd
+    then Nothing
+    else Just $ unsafeSlice urlHostStart urlHostEnd urlSerialization
+
+getPath :: Url -> Maybe Bytes
+getPath Url{urlSerialization,urlPathStart,urlQueryStart} = 
+  if fromIntegral urlPathStart == len
+    then Nothing
+    else Just $ unsafeSlice urlPathStart end urlSerialization
+  where
+  len = Bytes.length urlSerialization
+  end = case urlQueryStart of
+    Just n -> n
+    Nothing -> fromIntegral len
+
+getQuery :: Url -> Maybe Bytes
+getQuery Url{urlQueryStart=Nothing} = Nothing
+getQuery Url{urlSerialization,urlQueryStart=Just queryStart,urlFragmentStart} =
+  Just $ unsafeSlice queryStart end urlSerialization
+  where
+  len = Bytes.length urlSerialization
+  end = case urlFragmentStart of
+    Nothing -> fromIntegral len
+    Just x -> x
+
+getFragment :: Url -> Maybe Bytes
+getFragment Url{urlFragmentStart=Nothing} = Nothing
+getFragment Url{urlSerialization,urlFragmentStart=Just fragmentStart} =
+  Just $ unsafeSlice fragmentStart (fromIntegral len) urlSerialization
+  where
+  len = Bytes.length urlSerialization
 
 -- | Possible parse errors
 data ParseError
@@ -88,16 +143,16 @@ parserUrl urlSerialization = do
   urlUsernameEnd <- fromIntegral <$> do
     if i4 >= i5 || i3 == i4
       then do
-        PU.jump (userStart + 1)
-        pure (userStart + 1)
+        PU.jump (userStart)
+        pure (userStart)
       else do
         let jumpi = i4 
         if i3 < i4
           then do
-            PU.jump (userStart + jumpi + 2)
+            PU.jump (userStart + jumpi + 1)
             pure (userStart + i3)
           else do
-            PU.jump (userStart + jumpi)
+            PU.jump (userStart + jumpi + 1)
             pure (userStart + i4)
   urlHostStart' <- PU.cursor
   let urlHostStart = fromIntegral urlHostStart'
@@ -142,3 +197,7 @@ parserUrl urlSerialization = do
       pure (Nothing, urlFragmentStart')
   pure $ Url {..}
 
+{-# INLINE unsafeSlice #-}
+unsafeSlice :: Word32 -> Word32 -> Bytes -> Bytes
+unsafeSlice begin end (Bytes arr off _) = 
+  Bytes arr (off + fromIntegral begin) (fromIntegral $ end - begin)
