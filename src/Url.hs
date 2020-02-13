@@ -56,8 +56,8 @@ data Url = Url
   , urlHostEnd       :: !Word32
   , urlPort          :: !(Maybe Word16)
   , urlPathStart     :: !Word32         -- Before initial '/', if any
-  , urlQueryStart    :: !(Maybe Word32) -- Before '?', unlike Position :: ::QueryStart
-  , urlFragmentStart :: !(Maybe Word32) -- Before '#', unlike Position :: ::FragmentStart
+  , urlQueryStart    :: !Word32 -- Before '?', unlike Position :: ::QueryStart
+  , urlFragmentStart :: !Word32 -- Before '#', unlike Position :: ::FragmentStart
   } deriving (Eq, Ord, Show)
 
 getScheme :: Url -> Maybe Bytes
@@ -82,27 +82,23 @@ getPath :: Url -> Maybe Bytes
 getPath Url{urlSerialization,urlPathStart,urlQueryStart} = 
   if fromIntegral urlPathStart == len
     then Nothing
-    else Just $ unsafeSlice urlPathStart end urlSerialization
+    else Just $ unsafeSlice urlPathStart urlQueryStart urlSerialization
   where
   len = Bytes.length urlSerialization
-  end = case urlQueryStart of
-    Just n -> n
-    Nothing -> fromIntegral len
 
 getQuery :: Url -> Maybe Bytes
-getQuery Url{urlQueryStart=Nothing} = Nothing
-getQuery Url{urlSerialization,urlQueryStart=Just queryStart,urlFragmentStart} =
-  Just $ unsafeSlice queryStart end urlSerialization
+getQuery Url{urlSerialization,urlQueryStart,urlFragmentStart} =
+  if len == fromIntegral urlQueryStart
+    then Nothing
+    else Just $ unsafeSlice urlQueryStart urlFragmentStart urlSerialization
   where
   len = Bytes.length urlSerialization
-  end = case urlFragmentStart of
-    Nothing -> fromIntegral len
-    Just x -> x
 
 getFragment :: Url -> Maybe Bytes
-getFragment Url{urlFragmentStart=Nothing} = Nothing
-getFragment Url{urlSerialization,urlFragmentStart=Just fragmentStart} =
-  Just $ unsafeSlice fragmentStart (fromIntegral len) urlSerialization
+getFragment Url{urlSerialization,urlFragmentStart} =
+  if len == fromIntegral urlFragmentStart
+  then Nothing
+  else Just $ unsafeSlice urlFragmentStart (fromIntegral len) urlSerialization
   where
   len = Bytes.length urlSerialization
 
@@ -177,24 +173,25 @@ parserUrl urlSerialization = do
   PU.unconsume i8
   (i9, _) <- P.measure $ P.skipUntil '#'
   PU.unconsume i9
+  let !len = fromIntegral $ Bytes.length urlSerialization
   (urlQueryStart, urlFragmentStart) <- case compare i8 i9 of
-    EQ -> pure (Nothing, Nothing)
+    EQ -> pure (len, len)
     LT -> do
       P.skipUntil '#'
       eoi <- P.isEndOfInput
       let urlFragmentStart' = 
             if eoi
-              then Nothing
-              else Just $ fromIntegral i9 + urlPathStart
-      pure (Just $ fromIntegral i8 + urlPathStart, urlFragmentStart')
+              then len
+              else fromIntegral i9 + urlPathStart
+      pure (fromIntegral i8 + urlPathStart, urlFragmentStart')
     GT -> do
       P.skipUntil '#'
       eoi <- P.isEndOfInput
       let urlFragmentStart' = 
             if eoi
-              then Nothing
-              else Just $ fromIntegral i9 + urlPathStart
-      pure (Nothing, urlFragmentStart')
+              then len
+              else fromIntegral i9 + urlPathStart
+      pure (urlFragmentStart', urlFragmentStart')
   pure $ Url {..}
 
 {-# INLINE unsafeSlice #-}

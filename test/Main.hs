@@ -29,8 +29,16 @@ unitTests = testGroup "Unit tests"
       getPath url1 @?= Just (fromAsciiString "/foo")
   , testCase "getQuery" $
       getQuery url1 @?= Just (fromAsciiString "?bar=qux")
+  , testCase "getQuery 2" $
+      getQuery url3 @?= Just (fromAsciiString "?")
+  , testCase "getQuery 3" $
+      getQuery url2 @?= Nothing
   , testCase "getFragment" $
       getFragment url1 @?= Just (fromAsciiString "#quine")
+  , testCase "getFragment 2" $
+      getFragment url3 @?= Just (fromAsciiString "#")
+  , testCase "getFragment 3" $
+      getFragment url2 @?= Nothing
   ]
 
 urlBytes1 :: Bytes
@@ -45,8 +53,8 @@ url1 = Url
   , urlHostEnd       = 18
   , urlPort          = Nothing
   , urlPathStart     = 18
-  , urlQueryStart    = Just 22
-  , urlFragmentStart = Just 30
+  , urlQueryStart    = 22
+  , urlFragmentStart = 30
   }
 
 urlBytes2 :: Bytes
@@ -61,8 +69,8 @@ url2 = Url
   , urlHostEnd       = 33
   , urlPort          = Just 322
   , urlPathStart     = 37
-  , urlQueryStart    = Nothing
-  , urlFragmentStart = Nothing
+  , urlQueryStart    = 38
+  , urlFragmentStart = 38
   }
 
 urlBytes3 :: Bytes
@@ -77,6 +85,6 @@ url3 = Url
   , urlHostEnd = 3
   , urlPort = Nothing
   , urlPathStart = 3
-  , urlQueryStart = Just 9
-  , urlFragmentStart = Just 10
+  , urlQueryStart = 9
+  , urlFragmentStart = 10
   }
