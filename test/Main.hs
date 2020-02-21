@@ -39,7 +39,13 @@ unitTests = testGroup "Unit tests"
       getFragment url3 @?= Just (fromAsciiString "#")
   , testCase "getFragment 3" $
       getFragment url2 @?= Nothing
+  , testCase "getExtension" $
+          getExtension (unwrap $ decodeUrl $ fromAsciiString "https://imgur.com/./f.o.o.png?bar=bar#q") 
+      @?= Just (fromAsciiString "png")
   ]
+
+unwrap :: Either a b -> b
+unwrap = either (error "unwrap") id
 
 urlBytes1 :: Bytes
 urlBytes1 = fromAsciiString "https://google.com/foo?bar=qux#quine"
