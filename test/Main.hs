@@ -1,9 +1,12 @@
+{-# language MagicHash #-}
+
 module Main where
 
 import Data.Bytes
 import Test.Tasty
 import Test.Tasty.HUnit
 import Url
+import Url.Unsafe
 
 main :: IO ()
 main = defaultMain tests
@@ -53,14 +56,14 @@ urlBytes1 = fromAsciiString "https://google.com/foo?bar=qux#quine"
 url1 :: Url
 url1 = Url
   { urlSerialization = urlBytes1
-  , urlSchemeEnd     = 5
-  , urlUsernameEnd   = 8
-  , urlHostStart     = 8
-  , urlHostEnd       = 18
-  , urlPort          = Nothing
-  , urlPathStart     = 18
-  , urlQueryStart    = 22
-  , urlFragmentStart = 30
+  , urlSchemeEnd     = 5#
+  , urlUsernameEnd   = 8#
+  , urlHostStart     = 8#
+  , urlHostEnd       = 18#
+  , urlPort          = 0x10000#
+  , urlPathStart     = 18#
+  , urlQueryStart    = 22#
+  , urlFragmentStart = 30#
   }
 
 urlBytes2 :: Bytes
@@ -69,14 +72,14 @@ urlBytes2 = fromAsciiString "http://user:password@facebook.org:322/"
 url2 :: Url
 url2 = Url
   { urlSerialization = urlBytes2
-  , urlSchemeEnd     = 4
-  , urlUsernameEnd   = 11
-  , urlHostStart     = 21
-  , urlHostEnd       = 33
-  , urlPort          = Just 322
-  , urlPathStart     = 37
-  , urlQueryStart    = 38
-  , urlFragmentStart = 38
+  , urlSchemeEnd     = 4#
+  , urlUsernameEnd   = 11#
+  , urlHostStart     = 21#
+  , urlHostEnd       = 33#
+  , urlPort          = 322#
+  , urlPathStart     = 37#
+  , urlQueryStart    = 38#
+  , urlFragmentStart = 38#
   }
 
 urlBytes3 :: Bytes
@@ -85,12 +88,12 @@ urlBytes3 = fromAsciiString "x@g/f/:/@?#"
 url3 :: Url
 url3 = Url
   { urlSerialization = urlBytes3
-  , urlSchemeEnd = 0
-  , urlUsernameEnd = 1
-  , urlHostStart = 2
-  , urlHostEnd = 3
-  , urlPort = Nothing
-  , urlPathStart = 3
-  , urlQueryStart = 9
-  , urlFragmentStart = 10
+  , urlSchemeEnd = 0#
+  , urlUsernameEnd = 1#
+  , urlHostStart = 2#
+  , urlHostEnd = 3#
+  , urlPort = 0x10000#
+  , urlPathStart = 3#
+  , urlQueryStart = 9#
+  , urlFragmentStart = 10#
   }

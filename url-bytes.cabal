@@ -17,7 +17,9 @@ library
   ghc-options: -Wall -O2
   exposed-modules: 
       Url
-  -- other-modules:
+      Url.Unsafe
+  other-modules:
+      Url.Rebind
   -- other-extensions:
   build-depends: 
       base ^>=4.13.0.0
