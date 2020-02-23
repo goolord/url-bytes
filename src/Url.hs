@@ -35,7 +35,7 @@ import Data.Word (Word8, Word32, Word16)
 import Data.Bytes.Types (Bytes(..))
 import Url.Rebind (parserUrl)
 import Url.Unsafe (Url(..),ParseError(..))
-import GHC.Exts (Int(I#))
+import GHC.Exts (Int(I#),(==#))
 import qualified Data.Bytes as Bytes
 import qualified Data.Bytes.Parser as P
 import qualified Data.Bytes.Parser.Latin as P (skipUntil, char2, decWord16)
@@ -51,47 +51,46 @@ getScheme Url{urlSerialization,urlSchemeEnd} =
 -- | Slice into the 'Url' and retrieve the username, if it's present
 getUsername :: Url -> Maybe Bytes
 getUsername Url{urlSerialization,urlSchemeEnd,urlUsernameEnd,urlHostStart} =
-  if I# urlUsernameEnd == I# urlHostStart
-    then Nothing
-    else Just $ unsafeSlice (I# urlSchemeEnd + 3) (I# urlUsernameEnd) urlSerialization
+  case urlUsernameEnd ==# urlHostStart of
+    0# -> Just $ unsafeSlice (I# urlSchemeEnd + 3) (I# urlUsernameEnd) urlSerialization
+    _ -> Nothing
 
 -- | Slice into the 'Url' and retrieve the host, if it's present
 getHost :: Url -> Maybe Bytes
 getHost Url{urlSerialization,urlHostStart,urlHostEnd} =
-  if I# urlHostStart == I# urlHostEnd
-    then Nothing
-    else Just $ unsafeSlice (I# urlHostStart) (I# urlHostEnd) urlSerialization
+  case urlHostStart ==# urlHostEnd of
+    0# -> Just $ unsafeSlice (I# urlHostStart) (I# urlHostEnd) urlSerialization
+    _ -> Nothing
 
 -- | Slice into the 'Url' and retrieve the path starting with @\'/'@, if it's present
 getPath :: Url -> Maybe Bytes
 getPath Url{urlSerialization,urlPathStart,urlQueryStart} = 
-  if I# urlPathStart == len
-    then Nothing
-    else Just $ unsafeSlice (I# urlPathStart) (I# urlQueryStart) urlSerialization
+  case urlPathStart ==# len of
+    0# -> Just $ unsafeSlice (I# urlPathStart) (I# urlQueryStart) urlSerialization
+    _ -> Nothing
   where
-  len = Bytes.length urlSerialization
+  !(I# len) = Bytes.length urlSerialization
 
 -- | Slice into the 'Url' and retrieve the query string starting with @\'?'@, if it's present
 getQuery :: Url -> Maybe Bytes
 getQuery Url{urlSerialization,urlQueryStart,urlFragmentStart} =
-  if len == I# urlQueryStart
-    then Nothing
-    else Just $ unsafeSlice (I# urlQueryStart) (I# urlFragmentStart) urlSerialization
+  case len ==# urlQueryStart of
+    0# -> Just $ unsafeSlice (I# urlQueryStart) (I# urlFragmentStart) urlSerialization
+    _ -> Nothing
   where
-  len = Bytes.length urlSerialization
+  !(I# len) = Bytes.length urlSerialization
 
 -- | Slice into the 'Url' and retrieve the fragment starting with @\'#'@, if it's present
 getFragment :: Url -> Maybe Bytes
 getFragment Url{urlSerialization,urlFragmentStart} =
-  if len == I# urlFragmentStart
-    then Nothing
-    else Just $ unsafeSlice (I# urlFragmentStart) len urlSerialization
+  case len ==# urlFragmentStart of
+    0# -> Just $ unsafeSlice (I# urlFragmentStart) (I# len) urlSerialization
+    _ -> Nothing
   where
-  len = Bytes.length urlSerialization
+  !(I# len) = Bytes.length urlSerialization
 
 -- | This function is intentionally imprecise. 
 -- E.g. @getExtension "google.com/facebook.com" == Just ".com"@
-
 getExtension :: Url -> Maybe Bytes
 getExtension url = do
   path <- getPath url
