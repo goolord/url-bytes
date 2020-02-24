@@ -19,15 +19,8 @@ module Url.Unsafe
   , ParseError(..)
   ) where
 
-import Control.Monad ((<$!>))
-import Data.Char (ord)
-import Data.Word (Word8, Word32, Word16)
 import Data.Bytes.Types (Bytes(..))
-import GHC.Exts (Int#,Word#)
-import qualified Data.Bytes as Bytes
-import qualified Data.Bytes.Parser as P
-import qualified Data.Bytes.Parser.Latin as P (skipUntil, char2, decWord16)
-import qualified Data.Bytes.Parser.Unsafe as PU
+import GHC.Exts (Int#)
 
 -- | Url type represented by its serialization,
 -- and slices of that serialization.

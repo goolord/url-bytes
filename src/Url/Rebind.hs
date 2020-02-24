@@ -15,7 +15,7 @@
 -- The parser lives in its own module because it uses RebindableSyntax,
 -- which adversely affects inference and error messages.
 module Url.Rebind
-  ( parserUrl
+  ( decodeUrl
   ) where
 
 import Prelude hiding ((>>=),(>>),pure)
@@ -25,19 +25,23 @@ import Url.Unsafe (Url(..),ParseError(..))
 import Data.Char (ord)
 import Data.Word (Word8)
 import Data.Bytes.Types (Bytes(..))
-import GHC.Exts (Int(I#),Int#,Word#,(+#),(<#),(-#),orI#,(>=#),(==#),(>#))
-import GHC.Word (Word(W#),Word16(W16#))
-import qualified Data.Bytes as Bytes
+import GHC.Exts (Int(I#),Int#,(+#),(<#),(-#),orI#,(>=#),(==#),(>#))
+import GHC.Word (Word16(W16#))
 import qualified Data.Bytes.Parser as P
 import qualified Data.Bytes.Parser.Latin as P (skipUntil, char2, decWord16)
 import qualified Data.Bytes.Parser.Unsafe as PU
 import qualified GHC.Exts as Exts
 
+-- | Decode a hierarchical URL
+decodeUrl :: Bytes -> Either ParseError Url
+decodeUrl urlSerialization = P.parseBytesEither (parserUrl urlSerialization) urlSerialization
+
 -- | Parser type from @bytesmith@
 -- Note: non-hierarchical Urls (such as relative paths) will not currently parse.
 parserUrl :: Bytes -> P.Parser ParseError s Url
-parserUrl urlSerialization = let !(I# len) = Bytes.length urlSerialization in
-  -- TODO: use skipTrailedByEither later
+parserUrl urlSerialization@(Bytes _ _ (I# len)) = 
+  PU.cursor#
+  >>= \start ->
   P.measure
     ( P.skipTrailedBy2 EndOfInput (c2w ':') (c2w '/')
       `P.orElse`
@@ -48,8 +52,7 @@ parserUrl urlSerialization = let !(I# len) = Bytes.length urlSerialization in
         False ->
           P.char2 InvalidAuthority '/' '/' >> pure (i1 -# 1# )
         True ->
-          -- Jump to position zero is unsound!!!
-          PU.jump 0 >> pure 0#
+          PU.jump (I# start) >> pure start
     )
   >>= \urlSchemeEnd -> PU.cursor#
   >>= \userStart -> P.measure_# (P.skipUntil ':')
@@ -68,10 +71,7 @@ parserUrl urlSerialization = let !(I# len) = Bytes.length urlSerialization in
   >>= \urlUsernameEnd -> PU.cursor#
   >>= \urlHostStart ->
     ( P.skipTrailedBy2# EndOfInput (c2w ':') (c2w '/')
-      -- Why was this orElse here? When it is commented out,
-      -- all tests still pass.
-      -- `P.orElse`
-      -- pure False
+      `orElse#` pure 0#
     )
   >>= \colonFirst2 ->
     ( case colonFirst2 of
@@ -95,19 +95,11 @@ parserUrl urlSerialization = let !(I# len) = Bytes.length urlSerialization in
   >>= \i9 -> PU.unconsume (I# i9)
   >>  ( case intCompare# i8 i9 of
           EQ -> pure (# len, len #)
-          LT -> P.skipUntil '#'
-            >>  P.isEndOfInput
-            >>= \eoi -> 
-            let !urlFragmentStart = case eoi of
-                  True -> len
-                  False -> i9 +# urlPathStart
+          LT -> P.skipUntil '#' >> 
+            let !urlFragmentStart = i9 +# urlPathStart
              in pure (# (i8 +# urlPathStart), urlFragmentStart #)
-          GT -> P.skipUntil '#'
-            >>  P.isEndOfInput
-            >>= \eoi ->
-            let !urlFragmentStart = case eoi of
-                  True -> len
-                  False -> i9 +# urlPathStart
+          GT -> P.skipUntil '#' >> 
+            let !urlFragmentStart = i9 +# urlPathStart
              in pure (# urlFragmentStart, urlFragmentStart #)
       )
   >>= \(# !urlQueryStart, !urlFragmentStart #) ->
@@ -127,3 +119,11 @@ c2w :: Char -> Word8
 c2w = fromIntegral . ord
 {-# INLINE c2w #-}
 
+orElse# :: forall e x s. PU.Parser x s Int# -> PU.Parser e s Int# -> PU.Parser e s Int#
+{-# inline orElse# #-}
+orElse# (PU.Parser f) (PU.Parser g) = PU.Parser
+  (\x s0 -> case f x s0 of
+    (# s1, r0 #) -> case r0 of
+      (# _ | #) -> g x s1
+      (# | r #) -> (# s1, (# | r #) #)
+  )

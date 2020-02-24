@@ -14,11 +14,10 @@
 -- | Note: this library parses, but does not validate urls
 module Url 
   ( -- * Types
-    Url
+    Url(urlSerialization)
   , ParseError(..)
     -- * Parsing
   , decodeUrl
-  , parserUrl
     -- * Slicing
   , getScheme
   , getUsername
@@ -29,17 +28,13 @@ module Url
   , getExtension
   ) where
 
-import Control.Monad ((<$!>))
-import Data.Char (ord)
-import Data.Word (Word8, Word32, Word16)
+import Data.Word (Word16)
 import Data.Bytes.Types (Bytes(..))
-import Url.Rebind (parserUrl)
+import Url.Rebind (decodeUrl)
 import Url.Unsafe (Url(..),ParseError(..))
 import GHC.Exts (Int(I#),(==#))
 import qualified Data.Bytes as Bytes
 import qualified Data.Bytes.Parser as P
-import qualified Data.Bytes.Parser.Latin as P (skipUntil, char2, decWord16)
-import qualified Data.Bytes.Parser.Unsafe as PU
 
 -- | Slice into the 'Url' and retrieve the scheme, if it's present
 getScheme :: Url -> Maybe Bytes
@@ -117,22 +112,7 @@ until_ p m = go
       then return ()
       else go
 
--- | Decode a hierarchical URL
-decodeUrl :: Bytes -> Either ParseError Url
-decodeUrl urlSerialization = P.parseBytesEither (parserUrl urlSerialization) urlSerialization
-
-data WordPair = WordPair 
-  {-# UNPACK #-} !Word32
-  {-# UNPACK #-} !Word32
-
 {-# INLINE unsafeSlice #-}
 unsafeSlice :: Int -> Int -> Bytes -> Bytes
-unsafeSlice begin end (Bytes arr off _) = 
-  Bytes arr (off + begin) (end - begin)
-
--- | Unsafe conversion between 'Char' and 'Word8'. This is a no-op and
--- silently truncates to 8 bits Chars > '\255'. It is provided as
--- convenience for ByteString construction.
-c2w :: Char -> Word8
-c2w = fromIntegral . ord
-{-# INLINE c2w #-}
+unsafeSlice begin end (Bytes arr _ _) = 
+  Bytes arr begin (end - begin)

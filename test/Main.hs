@@ -45,6 +45,10 @@ unitTests = testGroup "Unit tests"
   , testCase "getExtension" $
           getExtension (unwrap $ decodeUrl $ fromAsciiString "https://imgur.com/./f.o.o.png?bar=bar#q") 
       @?= Just (fromAsciiString "png")
+  , testCase "offsetUrl" $ do
+      let urlBytes1Offset = unsafeDrop 2 $ fromAsciiString "  " <> urlBytes1
+          Right url1Offset = decodeUrl urlBytes1Offset
+      getPath url1 @?= getPath url1Offset
   ]
 
 unwrap :: Either a b -> b
