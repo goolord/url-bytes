@@ -47,11 +47,12 @@ instance NFData Url.Unsafe.Url where
   rnf (Url.Unsafe.Url a _ _ _ _ _ _ _ _) = rnf a
 
 main :: IO ()
-main = defaultMain
-  [ bench "url-bytes 1000" $ nf (fmap Url.decodeUrl) bytesUrls
-  , bench "uri-bytestring strict 1000" $ nf (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
-  , bench "uri-bytestring lax 1000" $ nf (fmap $ URI.parseURI URI.laxURIParserOptions) bsUrls
-  ]
+main = do
+  defaultMain
+    [ bench "url-bytes 1,000" $ nf (fmap Url.decodeUrl) bytesUrls
+    , bench "uri-bytestring strict 1,000" $ nf (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
+    , bench "uri-bytestring lax 1,000" $ nf (fmap $ URI.parseURI URI.laxURIParserOptions) bsUrls
+    ]
   where
   !permUrls = take 1000 $ getZipList $ 
     (\a b c d -> a <> b <> c <> d)
