@@ -34,12 +34,14 @@ import qualified GHC.Exts as Exts
 
 -- | Decode a hierarchical URL
 decodeUrl :: Bytes -> Either ParseError Url
-decodeUrl urlSerialization = P.parseBytesEither (parserUrl urlSerialization) urlSerialization
+decodeUrl urlSerialization = P.parseBytesEither parserUrl urlSerialization
 
 -- | Parser type from @bytesmith@
 -- Note: non-hierarchical Urls (such as relative paths) will not currently parse.
-parserUrl :: Bytes -> P.Parser ParseError s Url
-parserUrl urlSerialization@(Bytes _ _ (I# len)) = 
+parserUrl :: P.Parser ParseError s Url
+parserUrl = 
+  P.peekRemaining 
+  >>= \urlSerialization@(Bytes _ _ (I# len)) ->
   PU.cursor#
   >>= \start ->
   P.measure
