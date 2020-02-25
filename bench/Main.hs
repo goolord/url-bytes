@@ -22,6 +22,7 @@ import qualified Url
 import qualified Url.Unsafe
 import qualified Data.ByteString.Char8 as BS
 import qualified URI.ByteString as URI
+import qualified Weigh
 
 instance NFData (URI.URIRef a) where
   rnf (URI.URI a b c d e) = rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e
@@ -53,6 +54,10 @@ main = do
     , bench "uri-bytestring strict 1,000" $ nf (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
     , bench "uri-bytestring lax 1,000" $ nf (fmap $ URI.parseURI URI.laxURIParserOptions) bsUrls
     ]
+  putStrLn "Memory usage:"
+  Weigh.mainWith $ do
+    Weigh.func "url-bytes 1,000 [Maybe Url]" (fmap Url.decodeUrl) bytesUrls
+    Weigh.func "uri-bytestring 1,000 [Maybe URI]" (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
   where
   !permUrls = take 1000 $ getZipList $ 
     (\a b c d -> a <> b <> c <> d)

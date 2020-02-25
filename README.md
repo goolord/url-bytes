@@ -4,20 +4,26 @@ memory efficient URL type / parsing for byteverse
 benchmarks:
 ```
 benchmarked url-bytes 1,000
-time                 191.8 μs   (190.8 μs .. 192.6 μs)
+time                 178.3 μs   (177.6 μs .. 179.3 μs)
                      1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 192.5 μs   (191.9 μs .. 193.5 μs)
-std dev              2.394 μs   (1.692 μs .. 3.548 μs)
+mean                 178.7 μs   (178.2 μs .. 179.2 μs)
+std dev              1.560 μs   (1.361 μs .. 1.842 μs)
 
 benchmarked uri-bytestring strict 1,000
-time                 1.755 ms   (1.746 ms .. 1.767 ms)
-                     1.000 R²   (0.999 R² .. 1.000 R²)
-mean                 1.743 ms   (1.738 ms .. 1.748 ms)
-std dev              18.29 μs   (14.19 μs .. 23.28 μs)
+time                 1.747 ms   (1.730 ms .. 1.769 ms)
+                     0.999 R²   (0.999 R² .. 1.000 R²)
+mean                 1.758 ms   (1.749 ms .. 1.768 ms)
+std dev              31.46 μs   (25.94 μs .. 42.44 μs)
 
 benchmarked uri-bytestring lax 1,000
-time                 1.776 ms   (1.768 ms .. 1.784 ms)
-                     1.000 R²   (1.000 R² .. 1.000 R²)
-mean                 1.772 ms   (1.768 ms .. 1.778 ms)
-std dev              15.20 μs   (10.95 μs .. 22.16 μs)
+time                 1.750 ms   (1.739 ms .. 1.761 ms)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 1.767 ms   (1.760 ms .. 1.783 ms)
+std dev              34.82 μs   (19.21 μs .. 62.27 μs)
+
+Memory usage:
+
+Case                              Allocated  GCs
+url-bytes 1,000 [Maybe Url]         200,000    0
+uri-bytestring 1,000 [Maybe URI]  6,771,360    6
 ```
