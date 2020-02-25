@@ -1,7 +1,7 @@
 # url-bytes
 memory efficient URL type / parsing for byteverse
 
-benchmarks:
+### Benchmarks:
 ```
 benchmarked url-bytes 1,000
 time                 178.3 μs   (177.6 μs .. 179.3 μs)
