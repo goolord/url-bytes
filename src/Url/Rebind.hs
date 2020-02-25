@@ -21,12 +21,12 @@ module Url.Rebind
 import Prelude hiding ((>>=),(>>),pure)
 import Data.Bytes.Parser.Rebindable ((>>),(>>=),pure)
 
-import Url.Unsafe (Url(..),ParseError(..))
+import Data.Bytes.Types (Bytes(..))
 import Data.Char (ord)
 import Data.Word (Word8)
-import Data.Bytes.Types (Bytes(..))
 import GHC.Exts (Int(I#),Int#,(+#),(<#),(-#),orI#,(>=#),(==#),(>#))
 import GHC.Word (Word16(W16#))
+import Url.Unsafe (Url(..),ParseError(..))
 import qualified Data.Bytes.Parser as P
 import qualified Data.Bytes.Parser.Latin as P (skipUntil, char2, decWord16)
 import qualified Data.Bytes.Parser.Unsafe as PU
@@ -47,10 +47,10 @@ parserUrl =
   P.measure
     ( P.skipTrailedBy2 EndOfInput (c2w ':') (c2w '/')
       `P.orElse`
-      pure False
+      pure True
     )
-  >>= \(I# i1, !colonFirst) ->
-    ( case colonFirst of
+  >>= \(I# i1, !slashFirst) ->
+    ( case slashFirst of
         False ->
           P.char2 InvalidAuthority '/' '/' >> pure (i1 -# 1# )
         True ->
@@ -73,20 +73,25 @@ parserUrl =
   >>= \urlUsernameEnd -> PU.cursor#
   >>= \urlHostStart ->
     ( P.skipTrailedBy2# EndOfInput (c2w ':') (c2w '/')
-      `orElse#` pure 0#
+      `orElse#` 2#
     )
-  >>= \colonFirst2 ->
-    ( case colonFirst2 of
-        0# -> PU.cursor#
+  >>= \colonSlashNeither ->
+    ( case colonSlashNeither of
+        0# -> PU.cursor# -- ':' encountered first
           >>= \urlHostEnd -> P.decWord16 InvalidPort
           >>= \(W16# urlPort) ->
           pure (# urlHostEnd -# 1#, Exts.word2Int# urlPort #)
-        _ -> -- PU.jump (I# ((urlHostStart +# i6) -# 1# ))
+        1# -> -- '/' encountered first
               PU.cursor#
           >>= \urlHostEnd' ->
               -- Backing up by one since we want to put the slash back
               -- to let it be part of the path.
               let urlHostEnd = urlHostEnd' -# 1# in
+              PU.jump (I# urlHostEnd)
+          >>  pure (# urlHostEnd, 0x10000# #)
+        _ -> -- neither encountered
+              PU.cursor#
+          >>= \urlHostEnd ->
               PU.jump (I# urlHostEnd)
           >>  pure (# urlHostEnd, 0x10000# #)
     )
@@ -115,17 +120,16 @@ intCompare# a b = case a ==# b of
   _ -> EQ
 
 -- | Unsafe conversion between 'Char' and 'Word8'. This is a no-op and
--- silently truncates to 8 bits Chars > '\255'. It is provided as
--- convenience for ByteString construction.
+-- silently truncates to 8 bits Chars > '\255'.
 c2w :: Char -> Word8
 c2w = fromIntegral . ord
 {-# INLINE c2w #-}
 
-orElse# :: forall e x s. PU.Parser x s Int# -> PU.Parser e s Int# -> PU.Parser e s Int#
+orElse# :: forall e x s. PU.Parser x s Int# -> Int# -> PU.Parser e s Int#
 {-# inline orElse# #-}
-orElse# (PU.Parser f) (PU.Parser g) = PU.Parser
-  (\x s0 -> case f x s0 of
+orElse# (PU.Parser f) i = PU.Parser
+  (\x@(# _, b, c #) s0 -> case f x s0 of
     (# s1, r0 #) -> case r0 of
-      (# _ | #) -> g x s1
+      (# _ | #) -> (# s1, (# | (# i, b, c #) #) #)
       (# | r #) -> (# s1, (# | r #) #)
   )
