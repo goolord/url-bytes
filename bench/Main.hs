@@ -19,6 +19,7 @@ import Data.Primitive.ByteArray
 import Control.Applicative (ZipList(..))
 import qualified Data.Bytes as Bytes
 import qualified Url
+import qualified Url.Unsafe
 import qualified Data.ByteString.Char8 as BS
 import qualified URI.ByteString as URI
 
@@ -42,8 +43,8 @@ instance NFData Url.ParseError
 instance NFData ByteArray where
   rnf !b = b `seq` ()
 instance NFData Bytes
-instance NFData Url.Url where
-  rnf (Url.Url a b c d e f g h i) = rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e `seq` rnf f `seq` rnf g `seq` rnf h `seq` rnf i
+instance NFData Url.Unsafe.Url where
+  rnf (Url.Unsafe.Url a _ _ _ _ _ _ _ _) = rnf a
 
 main :: IO ()
 main = defaultMain
