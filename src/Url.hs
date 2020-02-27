@@ -28,6 +28,7 @@ module Url
   , getFragment
   , getExtension
   , constructUrl
+  , literalUrl
   ) where
 
 import Data.Word (Word16)
@@ -123,20 +124,13 @@ unsafeSlice :: Int -> Int -> Bytes -> Bytes
 unsafeSlice begin end (Bytes arr _ _) = 
   Bytes arr begin (end - begin)
 
-constructUrl ::
-     Maybe String -- ^ scheme
-  -> String -- ^ host
-  -> Maybe Word16 -- ^ port
-  -> String -- ^ path
-  -> [(String,String)] -- query string params
-  -> Maybe String -- ^ framgent
-  -> Q (TExp Url)
-constructUrl mscheme host mport path qps mfrag = case decodeUrl $ Bytes.fromLatinString ser of
+literalUrl :: String -> Q (TExp Url)
+literalUrl ser = case decodeUrl $ Bytes.fromLatinString ser of
   Left e -> fail $ "Invalid url. Parse error: " <> show e
   Right Url{..} -> do
     pure $ TExp $
       ConE 'Url
-        `AppE` (ParensE $ (VarE 'Bytes.fromLatinString) `AppE` (LitE $ StringL ser) )
+        `AppE` (ParensE $ (VarE 'Bytes.fromLatinString) `AppE` (LitE $ StringL ser))
         `AppE` (liftInt# urlSchemeEnd)
         `AppE` (liftInt# urlUsernameEnd)
         `AppE` (liftInt# urlHostStart)
@@ -145,6 +139,19 @@ constructUrl mscheme host mport path qps mfrag = case decodeUrl $ Bytes.fromLati
         `AppE` (liftInt# urlPathStart)
         `AppE` (liftInt# urlQueryStart)
         `AppE` (liftInt# urlFragmentStart)
+  where
+  liftInt# :: Int# -> Exp
+  liftInt# x = LitE (IntPrimL (S# x))
+
+constructUrl ::
+     Maybe String -- ^ scheme
+  -> String -- ^ host
+  -> Maybe Word16 -- ^ port
+  -> String -- ^ path
+  -> [(String,String)] -- query string params
+  -> Maybe String -- ^ framgent
+  -> Q (TExp Url)
+constructUrl mscheme host mport path qps mfrag = literalUrl ser
   where
   ser = scheme <> host <> port <> path <> rqps <> frag
   scheme = case mscheme of
@@ -158,5 +165,3 @@ constructUrl mscheme host mport path qps mfrag = case decodeUrl $ Bytes.fromLati
   frag = case mfrag of
     Nothing -> mempty
     Just x -> "#" <> x
-  liftInt# :: Int# -> Exp
-  liftInt# x = LitE (IntPrimL (S# x))

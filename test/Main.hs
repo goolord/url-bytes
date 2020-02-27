@@ -52,8 +52,9 @@ unitTests = testGroup "Unit tests"
       let urlBytes1Offset = unsafeDrop 2 $ fromAsciiString "  " <> urlBytes1
           Right url1Offset = decodeUrl urlBytes1Offset
       getPath url1 @?= getPath url1Offset
-  , testCase "constructUrl" $
-      url1TH @?= url1
+  , testCase "constructUrl" $ do
+      url1TH1 @?= url1
+      url1TH2 @?= url1
   ]
 
 unwrap :: Either a b -> b
@@ -62,8 +63,11 @@ unwrap = either (error "unwrap") id
 urlBytes1 :: Bytes
 urlBytes1 = fromAsciiString "https://google.com/foo?bar=qux#quine"
 
-url1TH :: Url
-url1TH = $$(constructUrl (Just "https") "google.com" Nothing "/foo" [("bar", "qux")] (Just "quine"))
+url1TH1 :: Url
+url1TH1 = $$(constructUrl (Just "https") "google.com" Nothing "/foo" [("bar", "qux")] (Just "quine"))
+
+url1TH2 :: Url
+url1TH2 = $$(literalUrl "https://google.com/foo?bar=qux#quine")
 
 url1 :: Url
 url1 = Url
