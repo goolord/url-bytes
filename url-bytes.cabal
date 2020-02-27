@@ -22,9 +22,12 @@ library
       Url.Rebind
   -- other-extensions:
   build-depends: 
-      base ^>=4.13.0.0
-    , byteslice >= 0.2.1 && < 0.3
-    , bytesmith >= 0.3.6 && < 0.4
+      base >=4.13.0.0 && <5
+    , byteslice >=0.2.1 && <0.3
+    , primitive
+    , bytesmith >=0.3.6 && <0.4
+    , template-haskell >=2.15.0.0 && <2.17.0.0
+    , integer-gmp
   hs-source-dirs: src
   default-language: Haskell2010
 

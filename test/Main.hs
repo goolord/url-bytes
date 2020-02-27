@@ -1,4 +1,7 @@
-{-# language MagicHash #-}
+{-# LANGUAGE 
+    MagicHash 
+  , TemplateHaskell
+#-}
 
 module Main where
 
@@ -49,6 +52,8 @@ unitTests = testGroup "Unit tests"
       let urlBytes1Offset = unsafeDrop 2 $ fromAsciiString "  " <> urlBytes1
           Right url1Offset = decodeUrl urlBytes1Offset
       getPath url1 @?= getPath url1Offset
+  , testCase "constructUrl" $
+      url1TH @?= url1
   ]
 
 unwrap :: Either a b -> b
@@ -56,6 +61,9 @@ unwrap = either (error "unwrap") id
 
 urlBytes1 :: Bytes
 urlBytes1 = fromAsciiString "https://google.com/foo?bar=qux#quine"
+
+url1TH :: Url
+url1TH = $$(constructUrl (Just "https") "google.com" Nothing "/foo" [("bar", "qux")] (Just "quine"))
 
 url1 :: Url
 url1 = Url

@@ -54,7 +54,7 @@ main = do
     , bench "uri-bytestring strict 1,000" $ nf (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
     , bench "uri-bytestring lax 1,000" $ nf (fmap $ URI.parseURI URI.laxURIParserOptions) bsUrls
     ]
-  putStrLn "Memory usage:"
+  putStr "Memory usage:"
   Weigh.mainWith $ do
     Weigh.func "url-bytes 1,000 [Maybe Url]" (fmap Url.decodeUrl) bytesUrls
     Weigh.func "uri-bytestring 1,000 [Maybe URI]" (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls

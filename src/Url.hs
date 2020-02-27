@@ -9,6 +9,7 @@
   , RecordWildCards
   , NamedFieldPuns
   , ApplicativeDo
+  , TemplateHaskell
 #-}
 
 -- | Note: this library parses, but does not validate urls
@@ -26,13 +27,18 @@ module Url
   , getQuery
   , getFragment
   , getExtension
+  , constructUrl
   ) where
 
 import Data.Word (Word16)
 import Data.Bytes.Types (Bytes(..))
 import Url.Rebind (decodeUrl)
 import Url.Unsafe (Url(..),ParseError(..))
-import GHC.Exts (Int(I#),(==#))
+import GHC.Exts (Int(I#),(==#),Int#)
+import Language.Haskell.TH
+import Language.Haskell.TH.Syntax
+import Data.List (intercalate)
+import GHC.Integer.GMP.Internals (Integer(..))
 import qualified Data.Bytes as Bytes
 import qualified Data.Bytes.Parser as P
 
@@ -116,3 +122,41 @@ until_ p m = go
 unsafeSlice :: Int -> Int -> Bytes -> Bytes
 unsafeSlice begin end (Bytes arr _ _) = 
   Bytes arr begin (end - begin)
+
+constructUrl ::
+     Maybe String -- ^ scheme
+  -> String -- ^ host
+  -> Maybe Word16 -- ^ port
+  -> String -- ^ path
+  -> [(String,String)] -- query string params
+  -> Maybe String -- ^ framgent
+  -> Q (TExp Url)
+constructUrl mscheme host mport path qps mfrag = case decodeUrl $ Bytes.fromLatinString ser of
+  Left e -> fail $ "Invalid url. Parse error: " <> show e
+  Right Url{..} -> do
+    pure $ TExp $
+      ConE 'Url
+        `AppE` (ParensE $ (VarE 'Bytes.fromLatinString) `AppE` (LitE $ StringL ser) )
+        `AppE` (liftInt# urlSchemeEnd)
+        `AppE` (liftInt# urlUsernameEnd)
+        `AppE` (liftInt# urlHostStart)
+        `AppE` (liftInt# urlHostEnd)
+        `AppE` (liftInt# urlPort)
+        `AppE` (liftInt# urlPathStart)
+        `AppE` (liftInt# urlQueryStart)
+        `AppE` (liftInt# urlFragmentStart)
+  where
+  ser = scheme <> host <> port <> path <> rqps <> frag
+  scheme = case mscheme of
+    Nothing -> mempty
+    Just x -> x <> "://"
+  port = case mport of
+    Nothing -> mempty
+    Just x -> ':' : show x
+  rqps :: String
+  rqps = "?" <> (intercalate "&" $ fmap (\(a,b) -> a <> "=" <> b) qps)
+  frag = case mfrag of
+    Nothing -> mempty
+    Just x -> "#" <> x
+  liftInt# :: Int# -> Exp
+  liftInt# x = LitE (IntPrimL (S# x))
