@@ -27,6 +27,7 @@ module Url
   , getQuery
   , getFragment
   , getExtension
+  , getPort
   , constructUrl
   , literalUrl
   ) where
@@ -35,7 +36,8 @@ import Data.Word (Word16)
 import Data.Bytes.Types (Bytes(..))
 import Url.Rebind (decodeUrl)
 import Url.Unsafe (Url(..),ParseError(..))
-import GHC.Exts (Int(I#),(==#),Int#)
+import GHC.Exts (Int(I#),(==#),Int#,int2Word#)
+import GHC.Word (Word16(..))
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 import Data.List (intercalate)
@@ -90,6 +92,12 @@ getFragment Url{urlSerialization,urlFragmentStart} =
     _ -> Nothing
   where
   !(I# len) = Bytes.length urlSerialization
+
+getPort :: Url -> Maybe Word16
+getPort Url{urlPort} =
+  case urlPort of
+    0x10000# -> Nothing
+    x -> Just $ W16# (int2Word# x)
 
 -- | This function is intentionally imprecise. 
 -- E.g. @getExtension "google.com/facebook.com" == Just ".com"@
