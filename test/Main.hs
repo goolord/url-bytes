@@ -5,7 +5,9 @@
 
 module Main where
 
+import Control.Monad
 import Data.Bytes
+import Data.Either
 import Test.Tasty
 import Test.Tasty.HUnit
 import Url
@@ -25,6 +27,8 @@ unitTests = testGroup "Unit tests"
       decodeUrl urlBytes2 @?= Right url2
   , testCase "URL decoding test 3" $
       decodeUrl urlBytes3 @?= Right url3
+  , testCase "URL decoding test 4" $
+      when (isLeft (decodeUrl urlBytes4)) (assertFailure "")
   , testCase "getScheme" $
       getScheme url2 @?= Just (fromAsciiString "http")
   , testCase "getUsername" $
@@ -113,3 +117,7 @@ url3 = Url
   , urlQueryStart = 9#
   , urlFragmentStart = 10#
   }
+
+urlBytes4 :: Bytes
+urlBytes4 = fromAsciiString "file+udp:bar.txt"
+
