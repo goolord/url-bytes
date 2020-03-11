@@ -3,4 +3,4 @@ packages: .
 source-repository-package
     type: git
     location: https://github.com/byteverse/bytesmith
-    tag: d25a41304f83bc95dce89eebe800b4209ae8321a
+    tag: 0da6d710b0999b64dc5c720beb896037403cf2d2

@@ -108,13 +108,13 @@ urlBytes3 = fromAsciiString "x@g/f/:/@?#"
 url3 :: Url
 url3 = Url
   { urlSerialization = urlBytes3
-  , urlSchemeEnd = 0#
-  , urlUsernameEnd = 1#
-  , urlHostStart = 2#
-  , urlHostEnd = 3#
-  , urlPort = 0x10000#
-  , urlPathStart = 3#
-  , urlQueryStart = 9#
+  , urlSchemeEnd     = 0#
+  , urlUsernameEnd   = 1#
+  , urlHostStart     = 2#
+  , urlHostEnd       = 3#
+  , urlPort          = 0x10000#
+  , urlPathStart     = 3#
+  , urlQueryStart    = 9#
   , urlFragmentStart = 10#
   }
 
