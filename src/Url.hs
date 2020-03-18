@@ -39,7 +39,7 @@ import Url.Unsafe (Url(..),ParseError(..))
 import GHC.Exts (Int(I#),(==#),Int#,int2Word#)
 import GHC.Word (Word16(..))
 import Language.Haskell.TH
-import Language.Haskell.TH.Syntax
+import Language.Haskell.TH.Syntax (TExp(TExp))
 import Data.List (intercalate)
 import GHC.Integer.GMP.Internals (Integer(..))
 import qualified Data.Bytes as Bytes
