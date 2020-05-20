@@ -22,6 +22,8 @@ module Url
     -- * Slicing
   , getScheme
   , getUsername
+  , getAuthority
+  , getPassword
   , getHost
   , getPath
   , getQuery
@@ -57,6 +59,22 @@ getUsername :: Url -> Maybe Bytes
 getUsername Url{urlSerialization,urlSchemeEnd,urlUsernameEnd,urlHostStart} =
   case urlUsernameEnd ==# urlHostStart of
     0# -> Just $ unsafeSlice (I# urlSchemeEnd + 3) (I# urlUsernameEnd) urlSerialization
+    _ -> Nothing
+
+getAuthority :: Url -> Maybe Bytes
+getAuthority Url{urlSerialization,urlSchemeEnd,urlUsernameEnd,urlHostStart} =
+  case urlUsernameEnd ==# urlHostStart of
+    0# -> Just $ unsafeSlice (I# urlSchemeEnd + 3) (I# urlHostStart - 1) urlSerialization
+    _ -> Nothing
+
+getPassword :: Url -> Maybe Bytes
+getPassword Url{urlSerialization,urlUsernameEnd,urlHostStart} =
+  case urlUsernameEnd ==# urlHostStart of
+    0# -> 
+      let mpass = unsafeSlice (I# urlUsernameEnd) (I# urlHostStart - 1) urlSerialization
+      in case Bytes.uncons mpass of
+        Just (58,password) -> Just password
+        _ -> Nothing
     _ -> Nothing
 
 -- | Slice into the 'Url' and retrieve the host, if it's present

@@ -33,6 +33,10 @@ unitTests = testGroup "Unit tests"
       getScheme url2 @?= Just (fromAsciiString "http")
   , testCase "getUsername" $
       getUsername url2 @?= Just (fromAsciiString "user")
+  , testCase "getPassword" $
+      getPassword url2 @?= Just (fromAsciiString "password")
+  , testCase "getAuthority" $
+      getAuthority url2 @?= Just (fromAsciiString "user:password")
   , testCase "getHost" $
       getHost url2 @?= Just (fromAsciiString "facebook.org")
   , testCase "getPath" $
