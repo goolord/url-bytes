@@ -53,9 +53,13 @@ unitTests = testGroup "Unit tests"
       getFragment url3 @?= Just (fromAsciiString "#")
   , testCase "getFragment 3" $
       getFragment url2 @?= Nothing
-  , testCase "getExtension" $
-          getExtension (unwrap $ decodeUrl $ fromAsciiString "https://imgur.com/./f.o.o.png?bar=bar#q") 
-      @?= Just (fromAsciiString "png")
+  , testCase "getExtension" $ do
+      let eurl1 = getExtension $ unwrap $ decodeUrl $ fromAsciiString "https://imgur.com/./f.o.o.png?bar=bar#q"
+          eurl2 = getExtension $ unwrap $ decodeUrl $ fromAsciiString "foo.com/sustainability/bikeuab/commutesmart/itemlist/user/79-2020-05-20-18-13-31&format=feed&Itemid=597&format=feed&Itemid=597&type=rss&format=feed&Itemid=597&type=rss&format=feed&Itemid=597&type=rss&format=feed&Itemid=597"
+          eurl3 = getExtension $ unwrap $ decodeUrl $ fromAsciiString "foo.com/news/health/item/11418-o-neal-cancer-center-at-uab-urges-continued-cancer-screenings-during-pandemic"
+      eurl1 @?= Just (fromAsciiString "png")
+      eurl2 @?= Nothing
+      eurl3 @?= Nothing
   , testCase "offsetUrl" $ do
       let urlBytes1Offset = unsafeDrop 2 $ fromAsciiString "  " <> urlBytes1
           Right url1Offset = decodeUrl urlBytes1Offset

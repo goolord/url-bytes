@@ -45,7 +45,6 @@ import Language.Haskell.TH.Syntax (TExp(TExp))
 import Data.List (intercalate)
 import GHC.Integer.GMP.Internals (Integer(..))
 import qualified Data.Bytes as Bytes
-import qualified Data.Bytes.Parser as P
 
 -- | Slice into the 'Url' and retrieve the scheme, if it's present
 getScheme :: Url -> Maybe Bytes
@@ -122,28 +121,11 @@ getPort Url{urlPort} =
 getExtension :: Url -> Maybe Bytes
 getExtension url = do
   path <- getPath url
-  P.parseBytesMaybe parserExtension path
-
-parserExtension :: P.Parser () s Bytes
-parserExtension = do
-  until_ not $ succeeded $ P.skipTrailedBy () 47
-  until_ not $ succeeded $ P.skipTrailedBy () 46
-  rest <- P.remaining
-  if Bytes.null rest
-    then P.fail ()
-    else pure rest
-
-succeeded :: P.Parser e s a -> P.Parser e s Bool
-succeeded p = (True <$ p) `P.orElse` pure False
-
-until_ :: (Monad m) => (a -> Bool) -> m a -> m ()
-until_ p m = go
-  where
-  go = do 
-    x <- m
-    if p x
-      then return ()
-      else go
+  if not (Bytes.elem 0x2e path)
+  then Nothing
+  else case Bytes.split 0x2e path of
+    [] -> Nothing
+    xs -> Just $ last xs
 
 {-# INLINE unsafeSlice #-}
 unsafeSlice :: Int -> Int -> Bytes -> Bytes
