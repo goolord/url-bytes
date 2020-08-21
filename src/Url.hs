@@ -43,7 +43,7 @@ import GHC.Word (Word16(..))
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax (TExp(TExp))
 import Data.List (intercalate)
-import GHC.Integer.GMP.Internals (Integer(..))
+-- import GHC.Integer.GMP.Internals (Integer(..))
 import qualified Data.Bytes as Bytes
 
 -- | Slice into the 'Url' and retrieve the scheme, if it's present
@@ -149,7 +149,7 @@ literalUrl ser = case decodeUrl $ Bytes.fromLatinString ser of
         `AppE` (liftInt# urlFragmentStart)
   where
   liftInt# :: Int# -> Exp
-  liftInt# x = LitE (IntPrimL (S# x))
+  liftInt# x = LitE (IntPrimL (fromIntegral $ I# x))
 
 constructUrl ::
      Maybe String -- ^ scheme
