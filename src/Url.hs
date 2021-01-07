@@ -34,16 +34,15 @@ module Url
   , literalUrl
   ) where
 
-import Data.Word (Word16)
 import Data.Bytes.Types (Bytes(..))
-import Url.Rebind (decodeUrl)
-import Url.Unsafe (Url(..),ParseError(..))
+import Data.List (intercalate)
+import Data.Word (Word16)
 import GHC.Exts (Int(I#),(==#),Int#,int2Word#)
 import GHC.Word (Word16(..))
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax (TExp(TExp))
-import Data.List (intercalate)
--- import GHC.Integer.GMP.Internals (Integer(..))
+import Url.Rebind (decodeUrl)
+import Url.Unsafe (Url(..),ParseError(..))
 import qualified Data.Bytes as Bytes
 
 -- | Slice into the 'Url' and retrieve the scheme, if it's present
@@ -169,7 +168,7 @@ constructUrl mscheme host mport path qps mfrag = literalUrl ser
     Nothing -> mempty
     Just x -> ':' : show x
   rqps :: String
-  rqps = "?" <> (intercalate "&" $ fmap (\(a,b) -> a <> "=" <> b) qps)
+  rqps = "?" <> intercalate "&" (fmap (\(a,b) -> a <> "=" <> b) qps)
   frag = case mfrag of
     Nothing -> mempty
     Just x -> "#" <> x
