@@ -1,9 +1,11 @@
 {-# LANGUAGE
     BangPatterns
-  , GADTs
+  , DataKinds
   , DeriveGeneric
-  , StandaloneDeriving
+  , GADTs
   , MagicHash
+  , StandaloneDeriving
+  , TypeApplications
 #-}
 
 {-# OPTIONS_GHC
@@ -15,7 +17,6 @@ import Gauge.Main (defaultMain, bench, nf)
 import Data.Bytes.Types
 import Control.DeepSeq
 import GHC.Generics
-import Data.Primitive.ByteArray
 import Control.Applicative (ZipList(..))
 import qualified Data.Bytes as Bytes
 import qualified Url
@@ -23,6 +24,7 @@ import qualified Url.Unsafe
 import qualified Data.ByteString.Char8 as BS
 import qualified URI.ByteString as URI
 import qualified Weigh
+import qualified Dormouse.Uri as Dormouse
 
 instance NFData (URI.URIRef a) where
   rnf (URI.URI a b c d e) = rnf a `seq` rnf b `seq` rnf c `seq` rnf d `seq` rnf e
@@ -41,11 +43,36 @@ deriving instance Generic Url.ParseError
 deriving instance Generic Url.Url
 deriving instance Generic Bytes
 instance NFData Url.ParseError
-instance NFData ByteArray where
-  rnf !b = b `seq` ()
 instance NFData Bytes
 instance NFData Url.Unsafe.Url where
   rnf (Url.Unsafe.Url a _ _ _ _ _ _ _ _) = rnf a
+
+deriving instance Generic (Dormouse.Path a)
+deriving instance Generic Dormouse.AbsUri
+deriving instance Generic Dormouse.Authority
+deriving instance Generic Dormouse.Fragment
+deriving instance Generic Dormouse.Host
+deriving instance Generic Dormouse.Password
+deriving instance Generic Dormouse.PathSegment
+deriving instance Generic Dormouse.Query
+deriving instance Generic Dormouse.RelUri
+deriving instance Generic Dormouse.Scheme
+deriving instance Generic Dormouse.Uri
+deriving instance Generic Dormouse.UserInfo
+deriving instance Generic Dormouse.Username
+instance NFData (Dormouse.Path a)
+instance NFData Dormouse.AbsUri
+instance NFData Dormouse.Authority
+instance NFData Dormouse.Fragment
+instance NFData Dormouse.Host
+instance NFData Dormouse.Password
+instance NFData Dormouse.PathSegment
+instance NFData Dormouse.Query
+instance NFData Dormouse.RelUri
+instance NFData Dormouse.Scheme
+instance NFData Dormouse.Uri
+instance NFData Dormouse.UserInfo
+instance NFData Dormouse.Username
 
 main :: IO ()
 main = do
@@ -53,11 +80,13 @@ main = do
     [ bench "url-bytes 1,000" $ nf (fmap Url.decodeUrl) bytesUrls
     , bench "uri-bytestring strict 1,000" $ nf (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
     , bench "uri-bytestring lax 1,000" $ nf (fmap $ URI.parseURI URI.laxURIParserOptions) bsUrls
+    , bench "dormouse-uri 1,000" $ nf (fmap (Dormouse.parseUri @Maybe)) bsUrls
     ]
   putStr "Memory usage:"
   Weigh.mainWith $ do
     Weigh.func "url-bytes 1,000 [Maybe Url]" (fmap Url.decodeUrl) bytesUrls
     Weigh.func "uri-bytestring 1,000 [Maybe URI]" (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
+    Weigh.func "dormouse-uri 1,000 [Maybe Uri]" (fmap (Dormouse.parseUri @Maybe)) bsUrls
   where
   !permUrls = take 1000 $ getZipList $ 
     (\a b c d -> a <> b <> c <> d)

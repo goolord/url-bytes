@@ -56,13 +56,14 @@ benchmark bench
   build-depends:
       base
     , byteslice
-    , gauge
-    , primitive
-    , url-bytes
-    , uri-bytestring
     , bytestring
     , deepseq
+    , dormouse-uri
+    , gauge
     , primitive
+    , primitive
+    , uri-bytestring
+    , url-bytes
     , weigh
   ghc-options: -Wall -O2
   default-language: Haskell2010
