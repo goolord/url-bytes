@@ -38,7 +38,7 @@ decodeUrl urlSerialization = P.parseBytesEither parserUrl urlSerialization
 
 parserAuthority :: Int# -> P.Parser ParseError s (# Int#, Int#, Int#, Int#, Int# #)
 {-# inline parserAuthority #-}
-parserAuthority urlSchemeEnd = PU.cursor#
+parserAuthority urlSchemeEnd = do PU.cursor#
   >>= \userStart -> P.measure_# (P.skipUntil ':')
   >>= \i3 -> PU.unconsume (I# i3)
   >>  P.measure_# (P.skipUntil '@')
@@ -158,3 +158,16 @@ succeeded (PU.Parser f) = PU.Parser
       (# | (# _, b1, c1 #) #) -> (# s1, (# | (# 1#, b1, c1 #) #) #)
   )
 
+-- does not compile
+-- pfoo :: P.Parser ParseError s (# Int#, Int# #)
+-- pfoo = do
+--   start <- PU.cursor#
+--   i3 <- P.measure_# (P.skipUntil ':')
+--   PU.unconsume (I# i3)
+--   pure (# start, i3 #)
+
+pfoo' :: P.Parser ParseError s (# Int#, Int# #)
+pfoo' = do PU.cursor# 
+  >>= \start -> P.measure_# (P.skipUntil ':')
+  >>= \i3 -> PU.unconsume (I# i3) 
+  >> pure (# start, i3 #)
