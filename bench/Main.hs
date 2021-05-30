@@ -48,31 +48,23 @@ instance NFData Url.Unsafe.Url where
   rnf (Url.Unsafe.Url a _ _ _ _ _ _ _ _) = rnf a
 
 deriving instance Generic (Dormouse.Path a)
-deriving instance Generic Dormouse.AbsUri
 deriving instance Generic Dormouse.Authority
 deriving instance Generic Dormouse.Fragment
 deriving instance Generic Dormouse.Host
-deriving instance Generic Dormouse.Password
 deriving instance Generic Dormouse.PathSegment
 deriving instance Generic Dormouse.Query
-deriving instance Generic Dormouse.RelUri
 deriving instance Generic Dormouse.Scheme
 deriving instance Generic Dormouse.Uri
 deriving instance Generic Dormouse.UserInfo
-deriving instance Generic Dormouse.Username
 instance NFData (Dormouse.Path a)
-instance NFData Dormouse.AbsUri
 instance NFData Dormouse.Authority
 instance NFData Dormouse.Fragment
 instance NFData Dormouse.Host
-instance NFData Dormouse.Password
 instance NFData Dormouse.PathSegment
 instance NFData Dormouse.Query
-instance NFData Dormouse.RelUri
 instance NFData Dormouse.Scheme
 instance NFData Dormouse.Uri
 instance NFData Dormouse.UserInfo
-instance NFData Dormouse.Username
 
 main :: IO ()
 main = do
