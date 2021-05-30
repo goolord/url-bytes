@@ -138,14 +138,14 @@ literalUrl ser = case decodeUrl $ Bytes.fromLatinString ser of
     pure $ TExp $
       ConE 'Url
         `AppE` (ParensE $ (VarE 'Bytes.fromLatinString) `AppE` (LitE $ StringL ser))
-        `AppE` (liftInt# urlSchemeEnd)
-        `AppE` (liftInt# urlUsernameEnd)
-        `AppE` (liftInt# urlHostStart)
-        `AppE` (liftInt# urlHostEnd)
-        `AppE` (liftInt# urlPort)
-        `AppE` (liftInt# urlPathStart)
-        `AppE` (liftInt# urlQueryStart)
-        `AppE` (liftInt# urlFragmentStart)
+        `AppE` liftInt# urlSchemeEnd
+        `AppE` liftInt# urlUsernameEnd
+        `AppE` liftInt# urlHostStart
+        `AppE` liftInt# urlHostEnd
+        `AppE` liftInt# urlPort
+        `AppE` liftInt# urlPathStart
+        `AppE` liftInt# urlQueryStart
+        `AppE` liftInt# urlFragmentStart
   where
   liftInt# :: Int# -> Exp
   liftInt# x = LitE (IntPrimL (fromIntegral $ I# x))
