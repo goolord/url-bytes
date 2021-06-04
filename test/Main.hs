@@ -67,6 +67,16 @@ unitTests = testGroup "Unit tests"
   , testCase "constructUrl" $ do
       url1TH1 @?= url1
       url1TH2 @?= url1
+  , testCase "URL decoding 5, path" $ case decodeUrl urlBytes5 of
+      Left{} -> assertFailure "could not decode url 5"
+      Right u -> case getPath u of
+        Nothing -> assertFailure "url 5 missing path"
+        Just p -> fromAsciiString "/resource" @?= p
+  , testCase "URL decoding 6, path" $ case decodeUrl urlBytes5 of
+      Left{} -> assertFailure "could not decode url 6"
+      Right u -> case getPath u of
+        Nothing -> assertFailure "url 6 missing path"
+        Just p -> fromAsciiString "/resource" @?= p
   ]
 
 unwrap :: Either a b -> b
@@ -129,3 +139,8 @@ url3 = Url
 urlBytes4 :: Bytes
 urlBytes4 = fromAsciiString "file+udp:bar.txt"
 
+urlBytes5 :: Bytes
+urlBytes5 = fromAsciiString "http://example.com/resource?foo=bar"
+
+urlBytes6 :: Bytes
+urlBytes6 = fromAsciiString "example.com/resource?foo=bar"
