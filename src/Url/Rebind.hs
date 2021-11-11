@@ -25,7 +25,7 @@ import GHC.Exts (Int(I#),Int#,(+#),(<#),(-#),orI#,(>=#),(==#),(>#))
 import GHC.Word (Word16(W16#))
 import Url.Unsafe (Url(..),ParseError(..))
 import qualified Data.Bytes.Parser as P
-import qualified Data.Bytes.Parser.Latin as P (skipUntil, char2, decWord16)
+import qualified Data.Bytes.Parser.Latin as P (skipUntil, char, char2, decWord16, skipDigits1)
 import qualified Data.Bytes.Parser.Unsafe as PU
 import qualified GHC.Exts as Exts
 
@@ -87,15 +87,21 @@ parserUrl = do
     `P.orElse` pure True
   (# urlSchemeEnd, urlUsernameEnd, urlHostStart, urlHostEnd, urlPort #) <- case slashFirst of
     False ->
-      succeeded (P.char2 InvalidAuthority '/' '/') >>= \hasAuthority -> do
+      -- If we see something like "abc://" with a colon followed by two
+      -- slashes, we assume that the authority is present ("abc" in
+      -- this case).
+      succeeded (P.char2 InvalidAuthority '/' '/') >>= \hasAuthorityA -> do
         let urlSchemeEnd = (i1 -# 1# )
-        case hasAuthority of
-          0# -> pure (# urlSchemeEnd, urlSchemeEnd, urlSchemeEnd, urlSchemeEnd, 0x10000# #)
+        case hasAuthorityA of
+          0# -> succeeded (P.skipDigits1 () >> P.char () '/') >>= \hasAuthorityB ->
+            -- Here, we are looking for things like "example.com:8888/" that
+            -- are missing the scheme but include a port.
+            case hasAuthorityB of
+              0# -> pure (# urlSchemeEnd, urlSchemeEnd, urlSchemeEnd, urlSchemeEnd, 0x10000# #)
+              _ -> PU.jump (I# start) >> parserAuthority start
           _ -> parserAuthority urlSchemeEnd
     True ->
-      PU.jump (I# start) >> 
-        let urlSchemeEnd = start
-         in parserAuthority urlSchemeEnd 
+      PU.jump (I# start) >> parserAuthority start 
   urlPathStart <- PU.cursor#
   i8 <- P.measure_# (P.skipUntil '?')
   PU.unconsume (I# i8)
@@ -133,7 +139,10 @@ orElse# (PU.Parser f) i = PU.Parser
       (# | r #) -> (# s1, (# | r #) #)
   )
 
-succeeded :: PU.Parser e s a -> PU.Parser e s Int#
+-- Runs the parser, returning 1 if it succeeds and 0 if it fails.
+-- Rolls back on failure, but consumes on success.
+succeeded :: PU.Parser x s a -> PU.Parser e s Int#
+{-# inline succeeded #-}
 succeeded (PU.Parser f) = PU.Parser
   (\x@(# _, b, c #) s0 -> case f x s0 of
     (# s1, r0 #) -> case r0 of

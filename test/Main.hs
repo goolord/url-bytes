@@ -72,11 +72,16 @@ unitTests = testGroup "Unit tests"
       Right u -> case getPath u of
         Nothing -> assertFailure "url 5 missing path"
         Just p -> fromAsciiString "/resource" @?= p
-  , testCase "URL decoding 6, path" $ case decodeUrl urlBytes5 of
+  , testCase "URL decoding 6, path" $ case decodeUrl urlBytes6 of
       Left{} -> assertFailure "could not decode url 6"
       Right u -> case getPath u of
         Nothing -> assertFailure "url 6 missing path"
         Just p -> fromAsciiString "/resource" @?= p
+  , testCase "no-scheme-with-port" $ case decodeUrl urlBytes7 of
+      Left{} -> assertFailure "could not decode url 7"
+      Right u -> case getHost u of
+        Nothing -> assertFailure "url 7 missing host"
+        Just p -> fromAsciiString "example.com" @?= p
   ]
 
 unwrap :: Either a b -> b
@@ -144,3 +149,6 @@ urlBytes5 = fromAsciiString "http://example.com/resource?foo=bar"
 
 urlBytes6 :: Bytes
 urlBytes6 = fromAsciiString "example.com/resource?foo=bar"
+
+urlBytes7 :: Bytes
+urlBytes7 = fromAsciiString "example.com:8888/"
