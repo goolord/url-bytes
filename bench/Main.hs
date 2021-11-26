@@ -12,13 +12,13 @@
     -fno-warn-orphans
 #-}
 
-import Gauge.Main (defaultMain, bench, nf)
+import Test.Tasty.Bench (defaultMain, bench, nf)
 
 import Data.Bytes.Types
 import Control.DeepSeq
 import GHC.Generics
 import Control.Applicative (ZipList(..))
-import qualified Data.Bytes as Bytes
+import qualified Data.Bytes.Text.Latin1 as BytesL
 import qualified Url
 import qualified Url.Unsafe
 import qualified Data.ByteString.Char8 as BS
@@ -68,17 +68,20 @@ instance NFData Dormouse.UserInfo
 
 main :: IO ()
 main = do
+  putStr "\n"
+  putStr "Memory usage:"
+  Weigh.mainWith $ do
+    Weigh.func "url-bytes 1,000 [Maybe Url]" (fmap Url.decodeUrl) bytesUrls
+    Weigh.func "uri-bytestring 1,000 [Maybe URI]" (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
+    Weigh.func "dormouse-uri 1,000 [Maybe Uri]" (fmap (Dormouse.parseUri @Maybe)) bsUrls
+  putStr "\n"
+
   defaultMain
     [ bench "url-bytes 1,000" $ nf (fmap Url.decodeUrl) bytesUrls
     , bench "uri-bytestring strict 1,000" $ nf (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
     , bench "uri-bytestring lax 1,000" $ nf (fmap $ URI.parseURI URI.laxURIParserOptions) bsUrls
     , bench "dormouse-uri 1,000" $ nf (fmap (Dormouse.parseUri @Maybe)) bsUrls
     ]
-  putStr "Memory usage:"
-  Weigh.mainWith $ do
-    Weigh.func "url-bytes 1,000 [Maybe Url]" (fmap Url.decodeUrl) bytesUrls
-    Weigh.func "uri-bytestring 1,000 [Maybe URI]" (fmap $ URI.parseURI URI.strictURIParserOptions) bsUrls
-    Weigh.func "dormouse-uri 1,000 [Maybe Uri]" (fmap (Dormouse.parseUri @Maybe)) bsUrls
   where
   !permUrls = take 1000 $ getZipList $ 
     (\a b c d -> a <> b <> c <> d)
@@ -87,7 +90,7 @@ main = do
     <*> ZipList (cycle paths)
     <*> ZipList (cycle queryParams)
   !bsUrls = BS.pack <$> permUrls
-  !bytesUrls = Bytes.fromAsciiString <$> permUrls
+  !bytesUrls = BytesL.fromString <$> permUrls
 
 paths :: [String]
 paths =

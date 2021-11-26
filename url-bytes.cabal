@@ -59,9 +59,8 @@ benchmark bench
     , bytestring
     , deepseq
     , dormouse-uri
-    , gauge
     , primitive
-    , primitive
+    , tasty-bench
     , uri-bytestring
     , url-bytes
     , weigh

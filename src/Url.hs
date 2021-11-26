@@ -44,6 +44,7 @@ import Language.Haskell.TH.Syntax (TExp(TExp))
 import Url.Rebind (decodeUrl)
 import Url.Unsafe (Url(..),ParseError(..))
 import qualified Data.Bytes as Bytes
+import qualified Data.Bytes.Text.Latin1 as BytesL
 
 -- | Slice into the 'Url' and retrieve the scheme, if it's present
 getScheme :: Url -> Maybe Bytes
@@ -132,12 +133,12 @@ unsafeSlice begin end (Bytes arr _ _) =
   Bytes arr begin (end - begin)
 
 literalUrl :: String -> Q (TExp Url)
-literalUrl ser = case decodeUrl $ Bytes.fromLatinString ser of
+literalUrl ser = case decodeUrl $ BytesL.fromString ser of
   Left e -> fail $ "Invalid url. Parse error: " <> show e
   Right Url{..} -> do
     pure $ TExp $
       ConE 'Url
-        `AppE` (ParensE $ (VarE 'Bytes.fromLatinString) `AppE` (LitE $ StringL ser))
+        `AppE` (ParensE $ (VarE 'BytesL.fromString) `AppE` (LitE $ StringL ser))
         `AppE` liftInt# urlSchemeEnd
         `AppE` liftInt# urlUsernameEnd
         `AppE` liftInt# urlHostStart
