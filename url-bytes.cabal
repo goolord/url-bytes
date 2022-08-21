@@ -3,7 +3,7 @@ name: url-bytes
 version: 0.1.1.0
 synopsis: Memory efficient url type and parser.
 description: Memory efficient url type and parser library using the Bytes type from byteverse.
-bug-reports: github.com/goolord/url-bytes/issues
+bug-reports: https://github.com/goolord/url-bytes/issues
 license: MIT
 license-file: LICENSE
 author: Zachary Churchill
