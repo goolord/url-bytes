@@ -1,6 +1,6 @@
 cabal-version: 2.0
 name: url-bytes
-version: 0.1.1.0
+version: 0.1.1.1
 synopsis: Memory efficient url type and parser.
 description: Memory efficient url type and parser library using the Bytes type from byteverse.
 bug-reports: https://github.com/goolord/url-bytes/issues
